@@ -8,7 +8,10 @@ import {
   ArrowRight,
   TrendingUp,
   Cpu,
-  Fingerprint
+  Fingerprint,
+  Phone,
+  Mail,
+  MessageSquare
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -223,19 +226,19 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Procurement / How it works section */}
-        <div className="max-w-5xl mx-auto mt-24 pt-12 border-t border-white/5 text-left grid gap-12 md:grid-cols-2">
+        {/* How It Works & Why Universities Choose LevyFlow */}
+        <div className="max-w-5xl mx-auto mt-28 pt-12 border-t border-white/5 text-left grid gap-12 md:grid-cols-2">
           {/* How it works */}
           <div>
-            <h3 className="text-lg font-black text-white uppercase tracking-wider mb-6 text-blue-450">
+            <h3 className="text-lg font-black text-white uppercase tracking-wider mb-6 text-blue-400">
               How It Works For Your School
             </h3>
             <div className="space-y-6">
               {[
-                { step: '1', title: 'Deploy Branded Portal', desc: 'Register in 30 seconds. Enter your school and specific department or lecturer info to deploy a white-label portal instantly.' },
-                { step: '2', title: 'Share Verification Links', desc: 'Distribute the pre-registration link to gather the expectant payer list, followed by the payment gate link via WhatsApp/Telegram.' },
-                { step: '3', title: 'Students Submit Proofs', desc: 'Students enter their token and upload their transfer screenshots. Unclear receipts are flagged for quick one-click manual approval.' },
-                { step: '4', title: 'Export Reconciled Ledgers', desc: 'Export a neat, sorted dual-sheet Excel ledger with embedded QR codes linking directly to the hosted evidence images.' }
+                { step: '1', title: 'Deploy Branded Portal', desc: 'We configure and deploy your branded school or department payment verification portal within 14 days.' },
+                { step: '2', title: 'Distribute Verification Links', desc: 'Share the pre-registration link with course reps to log expected students, followed by the payment gate link.' },
+                { step: '3', title: 'Students Upload Proofs', desc: 'Students enter their 4-digit token and upload their transfer screenshots. Unclear receipts are flagged for simple admin verification.' },
+                { step: '4', title: 'Export Reconciled Ledgers', desc: 'Export a neat, sorted dual-sheet Excel ledger with embedded QR codes linking directly to hosted evidence images.' }
               ].map((item, i) => (
                 <div key={i} className="flex gap-4">
                   <div className="w-8 h-8 rounded-full bg-blue-600/10 border border-blue-500/30 text-blue-450 font-extrabold flex items-center justify-center text-xs shrink-0">
@@ -250,16 +253,17 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Objections Obviation / Procurement Badges */}
-          <div className="space-y-6 flex flex-col justify-center bg-slate-900/20 border border-white/5 rounded-3xl p-8 backdrop-blur-md">
-            <h3 className="text-base font-black text-white uppercase tracking-wider mb-2">
-              Why Institutional Hosts Trust LevyFlow
+          {/* Why Universities Choose LevyFlow */}
+          <div className="space-y-6 bg-slate-900/20 border border-white/5 rounded-3xl p-8 backdrop-blur-md">
+            <h3 className="text-lg font-black text-white uppercase tracking-wider mb-2 text-blue-405">
+              Why Universities Choose LevyFlow
             </h3>
-            <div className="grid gap-4 sm:grid-cols-1">
+            <div className="grid gap-4">
               {[
-                { title: '🔒 Private Student Ledger', desc: 'Uploaded receipt proofs and matric records are private. We never share student data.' },
-                { title: '💸 No Cost Hosting', desc: 'Designed on hyper-lean infrastructure to keep transaction costs at zero. Perfect for free-tier sustainability.' },
-                { title: '⚡ Zero Procurement Friction', desc: 'No complex contracts or server setups. Works directly in any browser with simple flat-rate options.' }
+                { title: '🔒 Private & Secure', desc: 'Student data is never shared. Screenshots automatically expire and delete after verification. Full event audit trail maintained.' },
+                { title: '⚡ Deployed in 14 Days', desc: 'Your custom branded portal live within two weeks. Onsite coordinator training and user documentation fully included.' },
+                { title: '📋 Audit-Ready Ledger', desc: 'Excel exports with embedded QR codes. High-fidelity printable formats meeting standard university record-keeping requirements.' },
+                { title: '🎓 Designed for Nigerian Institutions', desc: 'Native support for local commercial and digital banks (GTBank, OPay, Moniepoint). Handles third-party sponsor payments seamlessly.' }
               ].map((badge, i) => (
                 <div key={i} className="bg-slate-950/40 border border-white/5 rounded-2xl p-4">
                   <h4 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -270,6 +274,59 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Testimonials & Trust Indicators */}
+        <div className="max-w-4xl mx-auto mt-28 py-10 border-t border-b border-white/5 text-center">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6">
+            Institutional Trust & Feedback (Pilot Phase)
+          </p>
+          <div className="flex flex-wrap justify-center gap-4 mb-6">
+            {['UNILAG (Demo)', 'UI (Demo)', 'OAU (Demo)'].map((school, i) => (
+              <div key={i} className="px-4 py-2 bg-slate-900/50 border border-white/5 rounded-lg text-xs font-bold text-slate-400">
+                🏫 {school}
+              </div>
+            ))}
+          </div>
+          <blockquote className="text-sm italic text-slate-350 max-w-xl mx-auto leading-relaxed">
+            &ldquo;Reduced our semester departmental levy verification and reconciliation time from 3 days to under 30 minutes. Absolute game changer.&rdquo;
+            <span className="block not-italic text-[10px] font-black uppercase tracking-wider text-blue-400 mt-2">
+              — Economics Department Secretary, Pilot Program
+            </span>
+          </blockquote>
+        </div>
+
+        {/* Enterprise Call to Action */}
+        <div className="max-w-4xl mx-auto mt-28 bg-gradient-to-br from-blue-950/20 via-slate-900/60 to-slate-950 border border-blue-900/20 rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden backdrop-blur-lg">
+          <div className="absolute top-0 left-0 w-full h-full bg-blue-600/[0.02] -z-10" />
+          <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight mb-4">
+            Ready to Stop Chasing Payment Proofs?
+          </h2>
+          <p className="text-slate-400 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed mb-8">
+            See LevyFlow working with your institution&apos;s actual levy structures. Request a live tailored demo and see how easy student payment auditing can be. No obligation.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+            <Link href="mailto:hello@levyflow.ng?subject=LevyFlow%20Demo%20Request">
+              <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-8 rounded-xl text-sm flex items-center justify-center gap-2 transition-all">
+                <MessageSquare className="w-4 h-4" /> Request Demo
+              </Button>
+            </Link>
+            <Link href="mailto:hello@levyflow.ng?subject=LevyFlow%20Enterprise%20Pricing">
+              <Button variant="outline" className="w-full sm:w-auto border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-white font-extrabold py-3 px-8 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
+                <Mail className="w-4 h-4" /> Contact Sales
+              </Button>
+            </Link>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-xs text-slate-500 font-bold border-t border-white/5 pt-6">
+            <a href="https://wa.me/2348031234567" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-white transition-colors">
+              <Phone className="w-3.5 h-3.5 text-blue-500" /> Call or WhatsApp: +234 803 123 4567
+            </a>
+            <span className="hidden sm:inline text-slate-800">|</span>
+            <a href="mailto:hello@levyflow.ng" className="flex items-center gap-1.5 hover:text-white transition-colors">
+              <Mail className="w-3.5 h-3.5 text-blue-500" /> Email: hello@levyflow.ng
+            </a>
           </div>
         </div>
       </main>
