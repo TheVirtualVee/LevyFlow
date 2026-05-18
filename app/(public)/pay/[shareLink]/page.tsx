@@ -50,6 +50,26 @@ export default function PaymentPage({ params }: { params: { shareLink: string } 
   }, [params.shareLink])
 
   async function fetchCampaign() {
+    if (params.shareLink === 'demo') {
+      setCampaign({
+        id: 'demo-campaign-id',
+        title: 'Economics Department Dues - Year 2026',
+        amount: 5000,
+        bank_name: 'Wema Bank',
+        account_number: '0123456789',
+        account_name: 'UNILAG Economics Association',
+        ends_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 12).toISOString(), // 12 days left
+        school: {
+          name: 'University of Lagos'
+        }
+      })
+      setSchool({
+        primary_color: '#1e3a8a',
+        school_name_display: 'Economics Association'
+      })
+      return
+    }
+
     try {
       const { data, error: fetchErr } = await (supabase
         .from('campaigns') as any)
@@ -87,6 +107,21 @@ export default function PaymentPage({ params }: { params: { shareLink: string } 
     }
     setValidatingToken(true)
     setTokenError(null)
+
+    if (params.shareLink === 'demo') {
+      setTimeout(() => {
+        setRegistrant({
+          id: 'demo-registrant-id',
+          name: 'Chinedu Okafor',
+          matric: 'UL/22/ECO/1042'
+        })
+        setUsesRemaining(3)
+        setTokenValidated(true)
+        setValidatingToken(false)
+      }, 800)
+      return
+    }
+
     try {
       const response = await fetch(`/api/campaigns/${campaign.id}/validate-token`, {
         method: 'POST',
@@ -116,6 +151,23 @@ export default function PaymentPage({ params }: { params: { shareLink: string } 
 
   async function handleSubmit(formData: FormData) {
     setStatus('processing')
+
+    if (params.shareLink === 'demo') {
+      const screenshot = formData.get('screenshot') as File
+      if (screenshot) setUploadedFile(screenshot)
+
+      const name = formData.get('student_name') as string
+      const matric = formData.get('matric_number') as string
+      setSubmittedName(name || 'Chinedu Okafor')
+      setSubmittedMatric(matric || 'UL/22/ECO/1042')
+
+      setTimeout(() => {
+        setSessionToken('LF-DEMO-' + Math.random().toString(36).substring(2, 8).toUpperCase())
+        setStatus('success')
+      }, 2000)
+      return
+    }
+
     try {
       // Retain file to auto-reuse if a dispute is filed
       const screenshot = formData.get('screenshot') as File

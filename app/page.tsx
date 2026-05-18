@@ -32,11 +32,11 @@ export default function LandingPage() {
         </div>
         <div className="flex items-center gap-4">
           <Link href="/auth/login">
-            <span className="text-sm font-semibold text-slate-350 hover:text-white transition-colors cursor-pointer">
+            <span className="text-sm font-semibold text-slate-355 hover:text-white transition-colors cursor-pointer">
               Admin Login
             </span>
           </Link>
-          <Link href="/campaigns">
+          <Link href="/auth/signup">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-4 shadow-lg shadow-blue-500/20 rounded-lg transition-all flex items-center gap-1.5">
               Launch Console <ArrowRight className="w-3.5 h-3.5" />
             </Button>
@@ -47,14 +47,14 @@ export default function LandingPage() {
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 text-center">
         <div className="max-w-3xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-400/25 text-xs font-bold text-blue-400 uppercase tracking-widest animate-pulse">
-            <Cpu className="w-3.5 h-3.5" /> Next-Gen Forensic Reconciliation
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-400/25 text-xs font-bold text-blue-400 uppercase tracking-widest">
+            <ShieldCheck className="w-3.5 h-3.5" /> Smart Receipt Verification
           </div>
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-none text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-blue-400">
-            Automating Educational Levy Auditing
+            Stop Chasing Payment Proofs
           </h1>
           <p className="text-slate-400 text-sm sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            LevyFlow decodes student transaction receipts from popular banking apps via Google Cloud Document AI, runs fuzzy name similarity checks, and aggregates them into immutable event ledgers.
+            Students submit payment transfer screenshots. You get a verified, printable Excel ledger with secure verification QR codes. Reconciliation that takes minutes, not days.
           </p>
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/auth/login">
@@ -67,6 +67,24 @@ export default function LandingPage() {
                 Create Department / Lecturer Account
               </Button>
             </Link>
+          </div>
+
+          {/* Interactive Live Demo Gate */}
+          <div className="max-w-xl mx-auto mt-12 bg-blue-900/10 border border-blue-500/20 rounded-2xl p-6 text-center backdrop-blur-md">
+            <h3 className="text-base font-extrabold text-white mb-1.5 flex items-center justify-center gap-1.5">
+              🎬 See It Work in 60 Seconds
+            </h3>
+            <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+              Explore a live, fully functional student payment uploader. Test the token validation, receipt submission, and automatic scanning simulation. No signup required.
+            </p>
+            <Link href="/pay/demo">
+              <Button className="bg-blue-650 hover:bg-blue-700 text-white font-extrabold text-xs py-2.5 px-6 rounded-lg shadow-lg shadow-blue-500/15">
+                ▶ Launch Live Demo Campaign
+              </Button>
+            </Link>
+            <p className="text-[10px] text-slate-500 mt-2 font-bold">
+              (Simulation includes registration, code unlock, and verification receipt)
+             </p>
           </div>
 
           {/* Sliding Trust Marquee */}
@@ -160,9 +178,9 @@ export default function LandingPage() {
             <div className="w-10 h-10 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-center mb-4">
               <ScanLine className="w-5 h-5 text-blue-400" />
             </div>
-            <h3 className="text-base font-bold text-white">Document AI OCR Pipeline</h3>
+            <h3 className="text-base font-bold text-white">Smart Receipt Logging</h3>
             <p className="text-slate-400 text-xs mt-2 leading-relaxed">
-              Extracts sender name, amount, bank name, reference number, and timestamps from bank receipts (OPay, Moniepoint, etc.) with deep confidence score modeling.
+              Students upload payment screenshots. Our system securely stores them and extracts key details (amount, date) using smart pattern matching. Unclear receipts are flagged for easy manual review.
             </p>
           </div>
 
@@ -171,9 +189,9 @@ export default function LandingPage() {
             <div className="w-10 h-10 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-center mb-4">
               <TrendingUp className="w-5 h-5 text-blue-400" />
             </div>
-            <h3 className="text-base font-bold text-white">Fuzzy Name Matcher</h3>
+            <h3 className="text-base font-bold text-white">Simple Name Verification</h3>
             <p className="text-slate-400 text-xs mt-2 leading-relaxed">
-              Leverages advanced Jaccard token set intersections and Levenshtein edit distance calculations to auto-approve payments despite name variances.
+              Students enter their name and matric number. You see exactly who has submitted. For name variations or third-party payments, a simple click marks them as verified on your ledger.
             </p>
           </div>
 
@@ -182,9 +200,9 @@ export default function LandingPage() {
             <div className="w-10 h-10 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-center mb-4">
               <Fingerprint className="w-5 h-5 text-blue-400" />
             </div>
-            <h3 className="text-base font-bold text-white">Immutable Event Chain</h3>
+            <h3 className="text-base font-bold text-white">Immutable Audit Trail</h3>
             <p className="text-slate-400 text-xs mt-2 leading-relaxed">
-              Records all student transactions and overrides on an append-only verification ledger guarded by cryptographically hashed chains (SHA-256).
+              All payment records and status changes are logged in an append-only verification ledger. You can prove exactly what was submitted, when, and who verified it.
             </p>
           </div>
         </div>
@@ -202,6 +220,56 @@ export default function LandingPage() {
             <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
               Instantly compile student receipts sorted alphabetically, alongside verification columns. Every row embeds an immutable evidence QR code redirecting directly to the secure proof hosting server.
             </p>
+          </div>
+        </div>
+
+        {/* Procurement / How it works section */}
+        <div className="max-w-5xl mx-auto mt-24 pt-12 border-t border-white/5 text-left grid gap-12 md:grid-cols-2">
+          {/* How it works */}
+          <div>
+            <h3 className="text-lg font-black text-white uppercase tracking-wider mb-6 text-blue-450">
+              How It Works For Your School
+            </h3>
+            <div className="space-y-6">
+              {[
+                { step: '1', title: 'Deploy Branded Portal', desc: 'Register in 30 seconds. Enter your school and specific department or lecturer info to deploy a white-label portal instantly.' },
+                { step: '2', title: 'Share Verification Links', desc: 'Distribute the pre-registration link to gather the expectant payer list, followed by the payment gate link via WhatsApp/Telegram.' },
+                { step: '3', title: 'Students Submit Proofs', desc: 'Students enter their token and upload their transfer screenshots. Unclear receipts are flagged for quick one-click manual approval.' },
+                { step: '4', title: 'Export Reconciled Ledgers', desc: 'Export a neat, sorted dual-sheet Excel ledger with embedded QR codes linking directly to the hosted evidence images.' }
+              ].map((item, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-blue-600/10 border border-blue-500/30 text-blue-450 font-extrabold flex items-center justify-center text-xs shrink-0">
+                    {item.step}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-extrabold text-white">{item.title}</h4>
+                    <p className="text-slate-400 text-xs mt-1 leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Objections Obviation / Procurement Badges */}
+          <div className="space-y-6 flex flex-col justify-center bg-slate-900/20 border border-white/5 rounded-3xl p-8 backdrop-blur-md">
+            <h3 className="text-base font-black text-white uppercase tracking-wider mb-2">
+              Why Institutional Hosts Trust LevyFlow
+            </h3>
+            <div className="grid gap-4 sm:grid-cols-1">
+              {[
+                { title: '🔒 Private Student Ledger', desc: 'Uploaded receipt proofs and matric records are private. We never share student data.' },
+                { title: '💸 No Cost Hosting', desc: 'Designed on hyper-lean infrastructure to keep transaction costs at zero. Perfect for free-tier sustainability.' },
+                { title: '⚡ Zero Procurement Friction', desc: 'No complex contracts or server setups. Works directly in any browser with simple flat-rate options.' }
+              ].map((badge, i) => (
+                <div key={i} className="bg-slate-950/40 border border-white/5 rounded-2xl p-4">
+                  <h4 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                    {badge.title}
+                  </h4>
+                  <p className="text-slate-400 text-xs mt-1.5 leading-relaxed">{badge.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </main>
