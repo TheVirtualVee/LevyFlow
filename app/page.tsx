@@ -307,12 +307,12 @@ export default function LandingPage() {
             See LevyFlow working with your institution&apos;s actual levy structures. Request a live tailored demo and see how easy student payment auditing can be. No obligation.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-            <Link href="mailto:hello@levyflow.ng?subject=LevyFlow%20Demo%20Request">
+            <Link href="mailto:mail.lovisuals@gmail.com?subject=LevyFlow%20Demo%20Request">
               <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-8 rounded-xl text-sm flex items-center justify-center gap-2 transition-all">
                 <MessageSquare className="w-4 h-4" /> Request Demo
               </Button>
             </Link>
-            <Link href="mailto:hello@levyflow.ng?subject=LevyFlow%20Enterprise%20Pricing">
+            <Link href="mailto:mail.lovisuals@gmail.com?subject=LevyFlow%20Enterprise%20Pricing">
               <Button variant="outline" className="w-full sm:w-auto border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-white font-extrabold py-3 px-8 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
                 <Mail className="w-4 h-4" /> Contact Sales
               </Button>
@@ -320,12 +320,12 @@ export default function LandingPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-xs text-slate-500 font-bold border-t border-white/5 pt-6">
-            <a href="https://wa.me/2348031234567" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-white transition-colors">
-              <Phone className="w-3.5 h-3.5 text-blue-500" /> Call or WhatsApp: +234 803 123 4567
+            <a href="https://wa.me/2348083000771" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-white transition-colors">
+              <Phone className="w-3.5 h-3.5 text-blue-500" /> Call or WhatsApp: +234 808 300 0771
             </a>
             <span className="hidden sm:inline text-slate-800">|</span>
-            <a href="mailto:hello@levyflow.ng" className="flex items-center gap-1.5 hover:text-white transition-colors">
-              <Mail className="w-3.5 h-3.5 text-blue-500" /> Email: hello@levyflow.ng
+            <a href="mailto:mail.lovisuals@gmail.com" className="flex items-center gap-1.5 hover:text-white transition-colors">
+              <Mail className="w-3.5 h-3.5 text-blue-500" /> Email: mail.lovisuals@gmail.com
             </a>
           </div>
         </div>
