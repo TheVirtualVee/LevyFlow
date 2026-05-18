@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,23 +10,24 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { AlertCircle, Shield, UserPlus, ArrowRight, Loader2 } from 'lucide-react'
+import { AlertCircle, UserPlus, ArrowRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
 const schema = z.object({
   fullName: z.string().min(3, 'Full name must be at least 3 characters'),
   email: z.string().email('Enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  schoolId: z.string().optional().nullable(),
-  onboardNewSchool: z.boolean().default(false)
+  entityType: z.enum(['lecturer', 'department', 'faculty'], {
+    errorMap: () => ({ message: 'Select your administrative role context' })
+  }),
+  institutionName: z.string().min(3, 'Enter the name of your university or polytechnic'),
+  collectionName: z.string().min(2, 'e.g. Economics Dept, Dr. Adeyemi, or Faculty of Arts')
 })
 
 type FormValues = z.infer<typeof schema>
 
 export default function SignupPage() {
   const router = useRouter()
-  const [schools, setSchools] = useState<any[]>([])
-  const [loadingSchools, setLoadingSchools] = useState(true)
   const [serverError, setServerError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient()
@@ -34,32 +35,8 @@ export default function SignupPage() {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
-
-  const onboardNewSchoolValue = watch('onboardNewSchool')
-
-  useEffect(() => {
-    async function loadSchools() {
-      try {
-        const { data, error } = await supabase
-          .from('schools')
-          .select('id, name')
-          .eq('is_active', true)
-          .order('name')
-        
-        if (!error && data) {
-          setSchools(data)
-        }
-      } catch (e) {
-        console.error('Failed to load schools:', e)
-      } finally {
-        setLoadingSchools(false)
-      }
-    }
-    loadSchools()
-  }, [supabase])
 
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true)
@@ -87,18 +64,43 @@ export default function SignupPage() {
         return
       }
 
-      // Determine appropriate role and school_id
-      const finalSchoolId = values.onboardNewSchool ? null : (values.schoolId || null)
-      const finalRole = finalSchoolId ? 'host' : 'school_admin'
+      // 2. Automatically create the School / Department Entity in the background (Frictionless UX)
+      const schoolName = `${values.institutionName} (${values.collectionName})`
+      const schoolSlug = schoolName
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .substring(0, 80) + '-' + Math.random().toString(36).substring(2, 6)
 
-      // 2. Insert into user_profiles table (approved by default for prototyping convenience)
+      const { data: newSchool, error: schoolErr } = await (supabase
+        .from('schools') as any)
+        .insert({
+          name: schoolName,
+          slug: schoolSlug,
+          is_active: true
+        })
+        .select()
+        .single()
+
+      if (schoolErr || !newSchool) {
+        console.error('Frictionless school onboarding failure:', schoolErr)
+        setServerError(`Auth succeeded, but institution setup failed: ${schoolErr?.message}`)
+        return
+      }
+
+      const school = newSchool as any
+
+      // 3. Set role based on context ('school_admin' for Faculty, 'host' for Lecturers/Departments)
+      const finalRole = values.entityType === 'faculty' ? 'school_admin' : 'host'
+
+      // 4. Create user profile matching the new school
       const { error: profileError } = await (supabase
         .from('user_profiles' as any) as any)
         .insert({
           id: authData.user.id,
           full_name: values.fullName,
           email: values.email,
-          school_id: finalSchoolId,
+          school_id: school.id,
           role: finalRole,
           is_approved: true
         })
@@ -109,19 +111,26 @@ export default function SignupPage() {
         return
       }
 
-      // 3. Authenticate user session
+      // 5. Create default school configs
+      const { error: configError } = await (supabase
+        .from('school_configs') as any)
+        .insert({
+          school_id: school.id,
+          school_name_display: values.collectionName,
+          primary_color: '#1E40AF'
+        })
+
+      if (configError) {
+        console.error('Config creation error:', configError)
+      }
+
+      // 6. Sign in session on client and route directly into dashboard
       await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password
       })
 
-      // 4. Redirect based on school configuration
-      if (finalSchoolId) {
-        router.push('/campaigns')
-      } else {
-        // Must onboard new school first
-        router.push('/admin/schools/onboard')
-      }
+      router.push('/campaigns')
       router.refresh()
     } catch (e: any) {
       setServerError(e?.message || 'Registration failed. Please try again.')
@@ -147,7 +156,7 @@ export default function SignupPage() {
             Levy<span className="text-blue-500">Flow</span>
           </h2>
           <p className="text-slate-400 text-xs mt-2 font-medium tracking-wide uppercase">
-            Administrative Registration Gate
+            Administrative Onboarding Gate
           </p>
         </div>
 
@@ -155,7 +164,7 @@ export default function SignupPage() {
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-bold text-white tracking-wide">Register Account</CardTitle>
             <CardDescription className="text-slate-400 text-xs">
-              Create an administrator profile to deploy payment campaigns.
+              Establish a lecturer, department, or faculty profile in under 30 seconds.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -169,11 +178,11 @@ export default function SignupPage() {
 
               {/* Full Name */}
               <div className="space-y-1.5">
-                <Label htmlFor="fullName" className="text-slate-300 font-semibold text-xs tracking-wider uppercase">Full Name</Label>
+                <Label htmlFor="fullName" className="text-slate-300 font-semibold text-xs tracking-wider uppercase">Your Full Name</Label>
                 <Input
                   id="fullName"
                   {...register('fullName')}
-                  placeholder="Dr. Adeyemi Alao"
+                  placeholder="e.g. Dr. Adeyemi Alao"
                   className="bg-slate-800/50 border-slate-700 text-white placeholder-slate-550 focus-visible:ring-blue-500"
                 />
                 {errors.fullName && (
@@ -188,7 +197,7 @@ export default function SignupPage() {
                   id="email"
                   type="email"
                   {...register('email')}
-                  placeholder="admin@school.edu.ng"
+                  placeholder="e.g. adeyemi@unilag.edu.ng"
                   className="bg-slate-800/50 border-slate-700 text-white placeholder-slate-550 focus-visible:ring-blue-500"
                 />
                 {errors.email && (
@@ -211,45 +220,48 @@ export default function SignupPage() {
                 )}
               </div>
 
-              {/* School Association */}
-              <div className="space-y-3 pt-2 border-t border-slate-800">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="onboardNewSchool"
-                    {...register('onboardNewSchool')}
-                    className="w-4 h-4 rounded border-slate-750 text-blue-600 focus:ring-blue-500/20"
-                  />
-                  <Label htmlFor="onboardNewSchool" className="text-slate-300 font-semibold text-xs tracking-wider uppercase cursor-pointer">
-                    Onboard a new school/department
-                  </Label>
-                </div>
+              {/* Role Picker Context */}
+              <div className="space-y-1.5 pt-2 border-t border-slate-800">
+                <Label htmlFor="entityType" className="text-slate-300 font-semibold text-xs tracking-wider uppercase">I am collecting as a...</Label>
+                <select
+                  id="entityType"
+                  {...register('entityType')}
+                  className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-800/50 text-white px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
+                >
+                  <option value="lecturer" className="text-slate-900">Individual Lecturer / Coordinator</option>
+                  <option value="department" className="text-slate-900">Departmental Admin / Course Rep</option>
+                  <option value="faculty" className="text-slate-900">Faculty-Level Administrator</option>
+                </select>
+                {errors.entityType && (
+                  <p className="text-xs text-rose-400 mt-1">{errors.entityType.message}</p>
+                )}
+              </div>
 
-                {!onboardNewSchoolValue && (
-                  <div className="space-y-1.5 transition-all">
-                    <Label htmlFor="schoolId" className="text-slate-300 font-semibold text-xs tracking-wider uppercase">Associate with Existing School</Label>
-                    <select
-                      id="schoolId"
-                      {...register('schoolId')}
-                      className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-800/50 text-white px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
-                      disabled={loadingSchools || schools.length === 0}
-                    >
-                      {loadingSchools ? (
-                        <option>Loading schools...</option>
-                      ) : schools.length === 0 ? (
-                        <option>No schools active. Please onboard one.</option>
-                      ) : (
-                        <>
-                          <option value="">Select school association</option>
-                          {schools.map((school) => (
-                            <option key={school.id} value={school.id} className="text-slate-900">
-                              {school.name}
-                            </option>
-                          ))}
-                        </>
-                      )}
-                    </select>
-                  </div>
+              {/* University/Polytechnic Name */}
+              <div className="space-y-1.5">
+                <Label htmlFor="institutionName" className="text-slate-300 font-semibold text-xs tracking-wider uppercase">University or Polytechnic</Label>
+                <Input
+                  id="institutionName"
+                  {...register('institutionName')}
+                  placeholder="e.g. University of Lagos"
+                  className="bg-slate-800/50 border-slate-700 text-white placeholder-slate-550 focus-visible:ring-blue-500"
+                />
+                {errors.institutionName && (
+                  <p className="text-xs text-rose-400 mt-1">{errors.institutionName.message}</p>
+                )}
+              </div>
+
+              {/* Specific Collection Entity Name */}
+              <div className="space-y-1.5">
+                <Label htmlFor="collectionName" className="text-slate-300 font-semibold text-xs tracking-wider uppercase">Specific Entity or Department Name</Label>
+                <Input
+                  id="collectionName"
+                  {...register('collectionName')}
+                  placeholder="e.g. Economics Dept or Dr. Adeyemi Dues"
+                  className="bg-slate-800/50 border-slate-700 text-white placeholder-slate-550 focus-visible:ring-blue-500"
+                />
+                {errors.collectionName && (
+                  <p className="text-xs text-rose-400 mt-1">{errors.collectionName.message}</p>
                 )}
               </div>
 
