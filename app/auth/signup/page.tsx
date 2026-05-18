@@ -17,11 +17,13 @@ const schema = z.object({
   fullName: z.string().min(3, 'Full name must be at least 3 characters'),
   email: z.string().email('Enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  entityType: z.enum(['lecturer', 'department', 'faculty'], {
+  entityType: z.enum(['lecturer', 'department', 'faculty', 'course_rep'], {
     errorMap: () => ({ message: 'Select your administrative role context' })
   }),
   institutionName: z.string().min(3, 'Enter the name of your university or polytechnic'),
-  collectionName: z.string().min(2, 'e.g. Economics Dept, Dr. Adeyemi, or Faculty of Arts')
+  collectionName: z.string().min(2, 'e.g. Economics Dept, Dr. Adeyemi, or Faculty of Arts'),
+  lecturerEmail: z.string().optional(),
+  courseCode: z.string().optional()
 })
 
 type FormValues = z.infer<typeof schema>
@@ -35,8 +37,11 @@ export default function SignupPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
+
+  const selectedEntityType = watch('entityType')
 
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true)
@@ -90,8 +95,27 @@ export default function SignupPage() {
 
       const school = newSchool as any
 
-      // 3. Set role based on context ('school_admin' for Faculty, 'host' for Lecturers/Departments)
-      const finalRole = values.entityType === 'faculty' ? 'school_admin' : 'host'
+      // 3. Set role based on context ('school_admin' for Faculty, 'course_rep' for Reps, 'host' for Lecturers/Departments)
+      let finalRole: string = 'host'
+      if (values.entityType === 'faculty') {
+        finalRole = 'school_admin'
+      } else if (values.entityType === 'course_rep') {
+        finalRole = 'course_rep'
+      }
+
+      // Find lecturer parent profile if course rep
+      let parentId: string | null = null
+      if (values.entityType === 'course_rep' && values.lecturerEmail) {
+        const { data: lecturerProfile } = await (supabase
+          .from('user_profiles') as any)
+          .select('id')
+          .eq('email', values.lecturerEmail.trim())
+          .single()
+        
+        if (lecturerProfile) {
+          parentId = (lecturerProfile as any).id
+        }
+      }
 
       // 4. Create user profile matching the new school
       const { error: profileError } = await (supabase
@@ -102,6 +126,8 @@ export default function SignupPage() {
           email: values.email,
           school_id: school.id,
           role: finalRole,
+          parent_id: parentId,
+          course_code: values.courseCode || null,
           is_approved: true
         })
 
@@ -164,7 +190,7 @@ export default function SignupPage() {
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-bold text-white tracking-wide">Register Account</CardTitle>
             <CardDescription className="text-slate-400 text-xs">
-              Establish a lecturer, department, or faculty profile in under 30 seconds.
+              Establish a lecturer, course representative, department, or faculty profile in under 30 seconds.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -229,13 +255,41 @@ export default function SignupPage() {
                   className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-800/50 text-white px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
                 >
                   <option value="lecturer" className="text-slate-900">Individual Lecturer / Coordinator</option>
-                  <option value="department" className="text-slate-900">Departmental Admin / Course Rep</option>
+                  <option value="course_rep" className="text-slate-900">Course Representative (ECO 301, etc.)</option>
+                  <option value="department" className="text-slate-900">Departmental Admin / Office</option>
                   <option value="faculty" className="text-slate-900">Faculty-Level Administrator</option>
                 </select>
                 {errors.entityType && (
                   <p className="text-xs text-rose-400 mt-1">{errors.entityType.message}</p>
                 )}
               </div>
+
+              {/* Course Representative Delegation Fields */}
+              {selectedEntityType === 'course_rep' && (
+                <div className="space-y-3.5 p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 animate-in fade-in duration-300 text-left">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="lecturerEmail" className="text-slate-300 font-semibold text-[10px] tracking-wider uppercase">Lecturer Email Address</Label>
+                    <Input
+                      id="lecturerEmail"
+                      {...register('lecturerEmail')}
+                      placeholder="e.g. adeyemi@unilag.edu.ng"
+                      className="bg-slate-800/50 border-slate-700 text-white placeholder-slate-550 focus-visible:ring-blue-500 text-xs"
+                    />
+                    <p className="text-[10px] text-slate-400 leading-normal">
+                      Linking your account lets your supervising lecturer oversee collections directly.
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="courseCode" className="text-slate-300 font-semibold text-[10px] tracking-wider uppercase">Course Code / Class Section</Label>
+                    <Input
+                      id="courseCode"
+                      {...register('courseCode')}
+                      placeholder="e.g. ECO 301"
+                      className="bg-slate-800/50 border-slate-700 text-white placeholder-slate-550 focus-visible:ring-blue-500 text-xs"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* University/Polytechnic Name */}
               <div className="space-y-1.5">

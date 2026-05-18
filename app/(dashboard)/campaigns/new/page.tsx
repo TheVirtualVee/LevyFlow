@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -40,12 +40,43 @@ export default function NewCampaignPage() {
   const supabase = createClient()
   const [serverError, setServerError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [courseReps, setCourseReps] = useState<any[]>([])
+  const [selectedRepId, setSelectedRepId] = useState<string>('')
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
+
+  useEffect(() => {
+    async function loadReps() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        // Get this host's user profile to match their school
+        const { data: profile } = await (supabase
+          .from('user_profiles') as any)
+          .select('school_id')
+          .eq('id', user.id)
+          .single()
+
+        if (profile?.school_id) {
+          const { data: reps } = await (supabase
+            .from('user_profiles') as any)
+            .select('id, full_name, course_code')
+            .eq('school_id', profile.school_id)
+            .eq('role', 'course_rep')
+          
+          if (reps) setCourseReps(reps)
+        }
+      } catch (e) {
+        console.error('Error loading course reps:', e)
+      }
+    }
+    loadReps()
+  }, [])
 
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true)
@@ -97,6 +128,8 @@ export default function NewCampaignPage() {
           ends_at: new Date(values.ends_at).toISOString(),
           status: 'active',
           share_link: shareLink,
+          owner_id: user.id,
+          manager_id: selectedRepId || user.id
         })
         .select()
         .single()
@@ -186,6 +219,50 @@ export default function NewCampaignPage() {
               {errors.amount && (
                 <p className="text-xs text-red-600">{errors.amount.message}</p>
               )}
+            </div>
+
+            {/* Delegation & Cash Routing */}
+            <div className="space-y-4 border-t border-slate-100 pt-4">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Delegation & Cash Control</h3>
+              
+              <div className="space-y-1.5">
+                <Label htmlFor="payment_destination">Payment Destination</Label>
+                <select
+                  id="payment_destination"
+                  className="flex h-9 w-full rounded-md border border-input bg-white text-slate-900 px-3 py-1 text-sm shadow-sm focus-visible:outline-none"
+                >
+                  <option value="direct">My Lecturer Account (Enter bank details below)</option>
+                  <option value="dept">Departmental General Account</option>
+                </select>
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  Money goes directly to your specified account. LevyFlow never holds or sits on institutional funds.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="delegate_to">Delegate Management To</Label>
+                <select
+                  id="delegate_to"
+                  value={selectedRepId}
+                  onChange={(e) => setSelectedRepId(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-white text-slate-900 px-3 py-1 text-sm shadow-sm focus-visible:outline-none"
+                >
+                  <option value="">Myself (I will manage this campaign)</option>
+                  {courseReps.map((rep) => (
+                    <option key={rep.id} value={rep.id}>
+                      {rep.full_name} ({rep.course_code || 'No Course'} Rep)
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  Course reps can register expectant student lists and track payment verifications. They will never touch physical cash or bank access.
+                </p>
+              </div>
+            </div>
+
+            {/* Bank details header */}
+            <div className="space-y-4 border-t border-slate-100 pt-4">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Account Remittance</h3>
             </div>
 
             {/* Bank */}
