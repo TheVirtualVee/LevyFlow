@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { SystemStatus } from '@/components/SystemStatus'
+import { ProfileSetupWizard } from '@/components/ProfileSetupWizard'
 
 const navLinks = [
   { href: '/campaigns', label: 'Campaigns', icon: FolderOpen },
@@ -32,22 +33,32 @@ export default function DashboardLayout({
   const supabase = createClient()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [role, setRole] = useState<string | null>(null)
+  const [profileExists, setProfileExists] = useState<boolean | null>(null)
+  const [userMetadata, setUserMetadata] = useState<{ id: string; email: string } | null>(null)
 
   useEffect(() => {
     async function loadRole() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
+          setUserMetadata({ id: user.id, email: user.email || '' })
           const { data: profile } = await (supabase
             .from('user_profiles') as any)
             .select('role')
             .eq('id', user.id)
             .maybeSingle()
+          
           if (profile?.role) {
             setRole(profile.role)
+            setProfileExists(true)
+          } else {
+            setProfileExists(false)
           }
+        } else {
+          setProfileExists(false)
         }
       } catch (e) {
+        setProfileExists(false)
       }
     }
     loadRole()
@@ -56,6 +67,30 @@ export default function DashboardLayout({
   async function handleLogout() {
     await supabase.auth.signOut()
     router.push('/auth/login')
+  }
+
+  if (profileExists === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-3"></div>
+          <p className="text-slate-400 font-medium">Resolving institutional secure profile...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (profileExists === false && userMetadata) {
+    return (
+      <ProfileSetupWizard
+        userId={userMetadata.id}
+        email={userMetadata.email}
+        onComplete={() => {
+          setProfileExists(true)
+          window.location.reload()
+        }}
+      />
+    )
   }
 
   const visibleLinks = navLinks.filter(link => !link.adminOnly || role === 'super_admin')
