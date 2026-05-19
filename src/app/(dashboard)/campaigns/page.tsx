@@ -38,7 +38,7 @@ export default function CampaignsListPage() {
         .from('user_profiles') as any)
         .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
       if (!profile) return
       setUserProfile(profile)
@@ -48,7 +48,7 @@ export default function CampaignsListPage() {
           .from('user_profiles') as any)
           .select('full_name, email')
           .eq('id', profile.parent_id)
-          .single()
+          .maybeSingle()
         if (parent) setParentLecturer(parent)
       }
 

@@ -18,7 +18,7 @@ export async function GET(
       .from('user_profiles') as any)
       .select('role, school_id')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
     const profile = profileData as any
 
@@ -30,7 +30,7 @@ export async function GET(
       .from('payment_sessions') as any)
       .select('*, campaign:campaign_id(*)')
       .eq('evidence_token', params.token)
-      .single()
+      .maybeSingle()
 
     const session = sessionData as any
 

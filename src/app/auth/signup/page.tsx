@@ -121,7 +121,7 @@ export default function SignupPage() {
           .from('user_profiles') as any)
           .select('id')
           .eq('email', values.lecturerEmail.trim())
-          .single()
+          .maybeSingle()
         
         if (lecturerProfile) {
           parentId = (lecturerProfile as any).id

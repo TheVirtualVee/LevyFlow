@@ -47,7 +47,7 @@ export default function SchoolOnboardPage() {
           .from('user_profiles') as any)
           .select('role')
           .eq('id', user.id)
-          .single()
+          .maybeSingle()
 
         if (profile?.role === 'super_admin') {
           setAuthorized(true)
@@ -92,7 +92,7 @@ export default function SchoolOnboardPage() {
         .from('user_profiles') as any)
         .select('role')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
       const profile = profileData as any
 

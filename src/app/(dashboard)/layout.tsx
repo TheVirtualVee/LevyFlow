@@ -42,7 +42,7 @@ export default function DashboardLayout({
             .from('user_profiles') as any)
             .select('role')
             .eq('id', user.id)
-            .single()
+            .maybeSingle()
           if (profile?.role) {
             setRole(profile.role)
           }

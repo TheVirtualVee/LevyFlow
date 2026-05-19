@@ -44,9 +44,12 @@ export default function ProfilePage() {
         .from('user_profiles') as any)
         .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
       
       if (error) throw error
+      if (!data) {
+        throw new Error('User profile record not found.')
+      }
 
       setProfile(data)
       setFormData({

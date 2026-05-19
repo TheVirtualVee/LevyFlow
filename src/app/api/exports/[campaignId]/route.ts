@@ -19,7 +19,7 @@ export async function GET(
       .from('user_profiles') as any)
       .select('role, school_id')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
     const profile = profileData as any
 
@@ -31,7 +31,7 @@ export async function GET(
       .from('campaigns') as any)
       .select('host_id, school_id')
       .eq('id', params.campaignId)
-      .single()
+      .maybeSingle()
 
     const campaign = campaignData as any
 

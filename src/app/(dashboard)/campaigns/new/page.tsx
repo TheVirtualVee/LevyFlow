@@ -59,7 +59,7 @@ export default function NewCampaignPage() {
           .from('user_profiles') as any)
           .select('school_id')
           .eq('id', user.id)
-          .single()
+          .maybeSingle()
 
         if (profile?.school_id) {
           const { data: reps } = await (supabase
@@ -91,7 +91,7 @@ export default function NewCampaignPage() {
         .from('user_profiles') as any)
         .select('school_id, is_approved')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
       const profile = profileData as any
 
