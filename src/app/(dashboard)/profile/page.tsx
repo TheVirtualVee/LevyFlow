@@ -145,6 +145,20 @@ export default function ProfilePage() {
     )
   }
 
+  if (!profile) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px] text-left">
+        <div className="text-center bg-white border border-slate-200 rounded-3xl p-8 max-w-sm shadow-sm">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <h3 className="text-lg font-bold text-slate-900">Credentials Not Found</h3>
+          <p className="text-slate-500 text-xs mt-1 leading-relaxed">
+            Your user profile could not be retrieved from the institutional database. Please contact your campus administrator.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   const initials = profile?.full_name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'LF'
   const isRep = profile?.role === 'course_rep'
   const roleDisplay = isRep 
@@ -167,7 +181,7 @@ export default function ProfilePage() {
             {/* Avatar Display */}
             <div className="relative group shrink-0">
               <div className="w-24 h-24 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center overflow-hidden border-2 border-slate-700/50 shadow-md">
-                {profile.avatar_url ? (
+                {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-3xl font-black tracking-tight text-white">{initials}</span>
