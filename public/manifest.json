@@ -1,0 +1,25 @@
+{
+  "name": "LevyFlow",
+  "short_name": "LevyFlow",
+  "description": "Instant payment proof reconciliation and forensic auditing for universities.",
+  "start_url": "/campaigns",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1e40af",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Campaign",
+      "short_name": "New",
+      "url": "/campaigns/new",
+      "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}
