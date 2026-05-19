@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { X, AlertTriangle, ArrowRight } from 'lucide-react'
+import { X, AlertTriangle, ArrowRight, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProfileSetupWizard } from './ProfileSetupWizard'
 
@@ -42,7 +42,25 @@ export function ProfileIncompleteBanner() {
   // A complete profile requires at least full_name and department
   const isComplete = profile?.full_name && profile?.department
 
-  if (isComplete) return null
+  if (isComplete) {
+    return (
+      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-3 mb-6 shadow-sm flex items-center justify-between animate-in fade-in duration-300">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0 border border-emerald-500/20">
+            <CheckCircle className="w-4 h-4 text-emerald-500" />
+          </div>
+          <span className="text-xs font-bold text-slate-800">Verified Host Active — Students see your premium verification trust badge</span>
+        </div>
+        <button 
+          onClick={() => setDismissed(true)} 
+          className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+          aria-label="Dismiss"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    )
+  }
 
   return (
     <>
