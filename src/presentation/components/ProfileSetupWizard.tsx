@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { User, Building2, Phone, Camera, Sparkles, Landmark, KeyRound, ArrowRight, Loader2, CheckCircle2, ShieldCheck, Mail, BookOpen, AlertCircle } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { User, Building2, Phone, Camera, Sparkles, Landmark, ArrowRight, Loader2, CheckCircle2, ShieldCheck, Mail, BookOpen, AlertCircle } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,7 +24,6 @@ export function ProfileSetupWizard({ userId, email, onComplete }: ProfileSetupWi
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const [courseReps, setCourseReps] = useState<any[]>([])
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -32,8 +31,6 @@ export function ProfileSetupWizard({ userId, email, onComplete }: ProfileSetupWi
     role: 'lecturer',
     title: '',
     department: '',
-    institutionName: '',
-    collectionName: '',
     courseCode: '',
     lecturerEmail: '',
     avatar_url: '',
@@ -81,51 +78,7 @@ export function ProfileSetupWizard({ userId, email, onComplete }: ProfileSetupWi
     setErrorMsg(null)
     
     try {
-      // 1. Resolve or create School
-      const schoolName = `${formData.institutionName || 'Nigeria University'} (${formData.collectionName || 'General Collection'})`
-      const schoolSlug = schoolName
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '-')
-        .replace(/-+/g, '-')
-        .substring(0, 80) + '-' + Math.random().toString(36).substring(2, 6)
-
-      const { data: newSchool, error: schoolErr } = await (supabase
-        .from('schools') as any)
-        .insert({
-          name: schoolName,
-          slug: schoolSlug,
-          is_active: true
-        })
-        .select()
-        .single()
-
-      if (schoolErr || !newSchool) {
-        throw new Error(`Failed to instantiate institutional credentials: ${schoolErr?.message}`)
-      }
-
-      const school = newSchool as any
-
-      // 2. Configure School Configs
-      const bankArray = formData.bank_name ? [formData.bank_name] : ['OPay', 'Moniepoint', 'GTBank']
-      const { error: configErr } = await (supabase
-        .from('school_configs') as any)
-        .insert({
-          school_id: school.id,
-          school_name_display: formData.collectionName || 'General Collections',
-          primary_color: '#1E40AF',
-          allowed_banks: bankArray,
-          auto_approve_threshold: 75.0,
-          manual_review_threshold: 40.0,
-          require_matric_format: '^[a-zA-Z0-9/\\-_]{5,20}$',
-          enable_qr_evidence: true,
-          enable_email_receipt: false
-        })
-
-      if (configErr) {
-        console.error('Config insertion warning:', configErr)
-      }
-
-      // 3. Resolve parent ID (if rep links to a lecturer)
+      // 1. Resolve parent ID (if rep links to a lecturer)
       let parentId: string | null = null
       if (formData.role === 'course_rep' && formData.lecturerEmail) {
         const { data: lecturerProfile } = await (supabase
@@ -139,7 +92,7 @@ export function ProfileSetupWizard({ userId, email, onComplete }: ProfileSetupWi
         }
       }
 
-      // 4. Create User Profile
+      // 2. Create User Profile - No school creation/association to skip RLS issues entirely!
       let finalRole = formData.role
       if (formData.role === 'lecturer') {
         finalRole = 'host'
@@ -157,7 +110,7 @@ export function ProfileSetupWizard({ userId, email, onComplete }: ProfileSetupWi
           department: formData.department || 'Departmental Administration',
           phone: formData.phone,
           role: finalRole,
-          school_id: school.id,
+          school_id: null, // Skipping school association entirely
           parent_id: parentId,
           course_code: formData.courseCode || null,
           avatar_url: formData.avatar_url || null,
@@ -170,6 +123,8 @@ export function ProfileSetupWizard({ userId, email, onComplete }: ProfileSetupWi
         throw profileError
       }
 
+      // 3. Save default bank details to local storage or profile if matching columns exist.
+      // (Campaign creator will pull defaults if they configure direct bank details).
       onComplete()
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to complete profile creation.')
@@ -194,27 +149,21 @@ export function ProfileSetupWizard({ userId, email, onComplete }: ProfileSetupWi
         <div className="h-1.5 w-full bg-slate-800">
           <div 
             className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500" 
-            style={{ width: `${(step / 3) * 100}%` }}
+            style={{ width: `${(step / 2) * 100}%` }}
           />
         </div>
 
         {/* Dynamic Header */}
         <div className="px-6 pt-8 pb-4 text-center">
           <div className="w-16 h-16 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg backdrop-blur-md">
-            {step === 1 && <User className="w-8 h-8 text-blue-400" />}
-            {step === 2 && <Building2 className="w-8 h-8 text-indigo-400" />}
-            {step === 3 && <Landmark className="w-8 h-8 text-emerald-400" />}
+            {step === 1 ? <User className="w-8 h-8 text-blue-400" /> : <Landmark className="w-8 h-8 text-emerald-400" />}
           </div>
           
           <h1 className="text-xl sm:text-2xl font-black tracking-tight">
-            {step === 1 && 'Institutional Identity'}
-            {step === 2 && 'Academic Affiliation'}
-            {step === 3 && 'Ledger Verification Details'}
+            {step === 1 ? 'Institutional Identity' : 'Ledger Verification Details'}
           </h1>
           <p className="text-slate-400 text-xs mt-1.5 leading-relaxed max-w-xs mx-auto">
-            {step === 1 && 'Establish your professional administrator profile.'}
-            {step === 2 && 'Set your university, polytechnic or college context.'}
-            {step === 3 && 'Finalize direct remittance settings.'}
+            {step === 1 ? 'Establish your professional administrator profile.' : 'Finalize your direct cash routing bank settings.'}
           </p>
         </div>
 
@@ -286,6 +235,36 @@ export function ProfileSetupWizard({ userId, email, onComplete }: ProfileSetupWi
                 </div>
               </div>
 
+              {/* Department */}
+              <div className="space-y-1.5">
+                <Label htmlFor="department">Faculty / Department <span className="text-rose-500">*</span></Label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Input
+                    id="department"
+                    value={formData.department}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    className="w-full bg-slate-800/50 border-slate-700 text-white pl-10 placeholder-slate-500"
+                    placeholder="e.g. English Department"
+                  />
+                </div>
+              </div>
+
+              {/* Title */}
+              <div className="space-y-1.5">
+                <Label htmlFor="title">Professional Title</Label>
+                <div className="relative">
+                  <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full bg-slate-800/50 border-slate-700 text-white pl-10 placeholder-slate-500"
+                    placeholder="e.g. Senior Lecturer, Associate Professor"
+                  />
+                </div>
+              </div>
+
               {/* Role Context Selection */}
               <div className="space-y-1.5">
                 <Label htmlFor="role">Collect Dues As...</Label>
@@ -299,62 +278,6 @@ export function ProfileSetupWizard({ userId, email, onComplete }: ProfileSetupWi
                   <option value="course_rep" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Course Representative (ECO 301, etc.)</option>
                   <option value="school_admin" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Department / Faculty Admin</option>
                 </select>
-              </div>
-
-              <Button
-                onClick={nextStep}
-                disabled={!formData.full_name || !formData.phone}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 mt-4 transition-all flex items-center justify-center gap-1.5 text-xs rounded-xl"
-              >
-                Proceed to Affiliation <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
-
-          {/* STEP 2: Institutional Setup */}
-          {step === 2 && (
-            <div className="space-y-4 animate-in fade-in duration-300">
-              
-              {/* Institution / University Name */}
-              <div className="space-y-1.5">
-                <Label htmlFor="institutionName">University or College Name <span className="text-rose-500">*</span></Label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <Input
-                    id="institutionName"
-                    value={formData.institutionName}
-                    onChange={(e) => setFormData({ ...formData, institutionName: e.target.value })}
-                    className="w-full bg-slate-800/50 border-slate-700 text-white pl-10 placeholder-slate-500"
-                    placeholder="e.g. University of Lagos"
-                  />
-                </div>
-              </div>
-
-              {/* Collection Name */}
-              <div className="space-y-1.5">
-                <Label htmlFor="collectionName">Department or Specific Class Name <span className="text-rose-500">*</span></Label>
-                <div className="relative">
-                  <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <Input
-                    id="collectionName"
-                    value={formData.collectionName}
-                    onChange={(e) => setFormData({ ...formData, collectionName: e.target.value })}
-                    className="w-full bg-slate-800/50 border-slate-700 text-white pl-10 placeholder-slate-500"
-                    placeholder="e.g. Economics Department, Dr. Opeyemi Dues"
-                  />
-                </div>
-              </div>
-
-              {/* Title */}
-              <div className="space-y-1.5">
-                <Label htmlFor="title">Professional Title</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full bg-slate-800/50 border-slate-700 text-white placeholder-slate-500"
-                  placeholder="e.g. Senior Lecturer, Assistant Professor"
-                />
               </div>
 
               {/* Course Rep specific inputs */}
@@ -392,27 +315,18 @@ export function ProfileSetupWizard({ userId, email, onComplete }: ProfileSetupWi
                 </div>
               )}
 
-              <div className="flex gap-3 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={prevStep}
-                  className="flex-1 border-slate-750 bg-slate-800/50 text-slate-300 hover:text-white"
-                >
-                  Back
-                </Button>
-                <Button
-                  onClick={nextStep}
-                  disabled={!formData.institutionName || !formData.collectionName}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 transition-all flex items-center justify-center gap-1.5 text-xs rounded-xl"
-                >
-                  Proceed to Ledger <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
+              <Button
+                onClick={nextStep}
+                disabled={!formData.full_name || !formData.phone || !formData.department}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 mt-4 transition-all flex items-center justify-center gap-1.5 text-xs rounded-xl"
+              >
+                Proceed to Ledger Routing <ArrowRight className="w-4 h-4" />
+              </Button>
             </div>
           )}
 
-          {/* STEP 3: Ledger Verification Details */}
-          {step === 3 && (
+          {/* STEP 2: Ledger Verification Details */}
+          {step === 2 && (
             <div className="space-y-4 animate-in fade-in duration-300">
               
               {/* Direct Remittance Trust Header */}

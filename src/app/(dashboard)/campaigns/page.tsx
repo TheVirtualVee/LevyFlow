@@ -56,7 +56,7 @@ export default function CampaignsListPage() {
       if (profile.role === 'course_rep') {
         query = query.or(`manager_id.eq.${user.id},host_id.eq.${user.id}`)
       } else {
-        query = query.eq('school_id', profile.school_id)
+        query = query.eq('host_id', user.id)
       }
 
       const { data: list, error: listErr } = await (query as any).order('created_at', { ascending: false })

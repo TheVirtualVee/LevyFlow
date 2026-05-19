@@ -95,8 +95,8 @@ export default function NewCampaignPage() {
 
       const profile = profileData as any
 
-      if (profileErr || !profile?.school_id) {
-        setServerError('Your account is not associated with a school. Contact your admin.')
+      if (profileErr || !profile) {
+        setServerError('Your profile is not properly configured. Contact your admin.')
         return
       }
 
@@ -114,7 +114,7 @@ export default function NewCampaignPage() {
         .from('campaigns') as any)
         .insert({
           host_id: user.id,
-          school_id: profile.school_id,
+          school_id: profile?.school_id || null,
           title: values.title,
           description: values.description || null,
           amount: values.amount,
