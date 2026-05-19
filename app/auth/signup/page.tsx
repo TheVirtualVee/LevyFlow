@@ -63,10 +63,18 @@ export default function SignupPage() {
       })
 
       if (authError) {
-        // Handle email confirmation case properly
-        if (authError.message.toLowerCase().includes('email not confirmed') || authError.message.toLowerCase().includes('already registered')) {
+        const msg = authError.message.toLowerCase()
+        // Case 1: User already exists
+        if (msg.includes('already registered') || msg.includes('already been registered')) {
           setRegisteredEmail(values.email)
-          setSuccessMessage('✅ Registration successful! Check your email to confirm your account.')
+          setSuccessMessage('📧 Account already exists. Check your email for the confirmation link, then log in.')
+          return
+        }
+        
+        // Case 2: Email not confirmed (existing but unconfirmed)
+        if (msg.includes('email not confirmed')) {
+          setRegisteredEmail(values.email)
+          setSuccessMessage('✅ Account created! Check your email to confirm, then log in.')
           return
         }
         
@@ -143,6 +151,12 @@ export default function SignupPage() {
 
       if (profileError) {
         console.error('Profile insertion error:', profileError)
+        const msg = profileError.message.toLowerCase()
+        if (msg.includes('duplicate key') || msg.includes('already exists') || msg.includes('unique constraint')) {
+          setRegisteredEmail(values.email)
+          setSuccessMessage('📧 Account already exists. Check your email for the confirmation link, then log in.')
+          return
+        }
         setServerError(`Auth succeeded, but profile creation failed: ${profileError.message}`)
         return
       }
