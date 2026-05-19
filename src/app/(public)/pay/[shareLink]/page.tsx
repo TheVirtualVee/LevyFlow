@@ -503,7 +503,7 @@ export default function PaymentPage({ params }: { params: { shareLink: string } 
           )}
 
           {/* Host Profile Trust Card */}
-          {campaign.host && (
+          {campaign.host ? (
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 mb-4 border border-white/10 text-left shadow-lg">
               <div className="flex items-center gap-4">
                 {campaign.host.avatar_url ? (
@@ -519,12 +519,16 @@ export default function PaymentPage({ params }: { params: { shareLink: string } 
                     </span>
                   </div>
                 )}
-                <div>
+                <div className="flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="font-extrabold text-sm text-white">{campaign.host.full_name}</p>
-                    {campaign.host.is_verified && (
+                    {campaign.host.full_name && campaign.host.department && campaign.host.title ? (
                       <span className="inline-flex items-center gap-0.5 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
                         <CheckCircle className="w-2.5 h-2.5" /> Verified
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-0.5 bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                        <AlertTriangle className="w-2.5 h-2.5" /> Unverified
                       </span>
                     )}
                   </div>
@@ -532,9 +536,28 @@ export default function PaymentPage({ params }: { params: { shareLink: string } 
                     {campaign.host.title || 'Faculty Member'} • {campaign.host.department || 'University Host'}
                   </p>
                   <p className="text-[10px] text-white/50 leading-tight mt-1">
-                    Payments land directly in the host&apos;s verified institution ledger.
+                    {campaign.host.full_name && campaign.host.department && campaign.host.title ? (
+                      <span className="text-emerald-400 font-semibold">✓ Faculty identity and bank details verified on-ledger.</span>
+                    ) : (
+                      <span className="text-amber-400 font-medium">⚠️ Faculty profile incomplete. Verify dues with host directly.</span>
+                    )}
                   </p>
                 </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-amber-500/10 backdrop-blur-md rounded-2xl p-4 mb-4 border border-amber-500/20 text-left shadow-lg flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+              <div>
+                <p className="font-extrabold text-sm text-white flex items-center gap-1.5">
+                  Host Profile Unverified 
+                  <span className="bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                    Unverified
+                  </span>
+                </p>
+                <p className="text-white/70 text-[11px] mt-1 leading-relaxed">
+                  This campaign host has not yet completed their profile verification. Remittances still route directly to their bank account, but proceed with discretion.
+                </p>
               </div>
             </div>
           )}

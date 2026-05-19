@@ -16,6 +16,7 @@ import {
 import { useState, useEffect } from 'react'
 import { SystemStatus } from '@/components/SystemStatus'
 import { ProfileSetupWizard } from '@/components/ProfileSetupWizard'
+import { ProfileIncompleteBanner } from '@/components/ProfileIncompleteBanner'
 
 const navLinks = [
   { href: '/campaigns', label: 'Campaigns', icon: FolderOpen },
@@ -80,18 +81,7 @@ export default function DashboardLayout({
     )
   }
 
-  if (profileExists === false && userMetadata) {
-    return (
-      <ProfileSetupWizard
-        userId={userMetadata.id}
-        email={userMetadata.email}
-        onComplete={() => {
-          setProfileExists(true)
-          window.location.reload()
-        }}
-      />
-    )
-  }
+
 
   const visibleLinks = navLinks.filter(link => !link.adminOnly || role === 'super_admin')
 
@@ -179,6 +169,7 @@ export default function DashboardLayout({
         </header>
 
         <main className="flex-1 px-4 sm:px-6 py-8">
+          <ProfileIncompleteBanner />
           {children}
         </main>
       </div>
