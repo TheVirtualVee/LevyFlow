@@ -11,12 +11,14 @@ import {
   ShieldCheck,
   Menu,
   X,
+  User,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { SystemStatus } from '@/components/SystemStatus'
 
 const navLinks = [
   { href: '/campaigns', label: 'Campaigns', icon: FolderOpen },
+  { href: '/profile', label: 'Profile', icon: User },
   { href: '/admin/schools/onboard', label: 'School Onboarding', icon: ShieldCheck, adminOnly: true },
 ]
 

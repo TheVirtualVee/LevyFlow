@@ -73,7 +73,7 @@ export default function PaymentPage({ params }: { params: { shareLink: string } 
     try {
       const { data, error: fetchErr } = await (supabase
         .from('campaigns') as any)
-        .select('*, school:school_id(*)')
+        .select('*, school:school_id(*), host:host_id(*)')
         .eq('share_link', params.shareLink)
         .eq('status', 'active')
         .single()
@@ -509,6 +509,43 @@ export default function PaymentPage({ params }: { params: { shareLink: string } 
           {campaign.ends_at && (
             <div className="mb-5">
               <CountdownTimer deadline={new Date(campaign.ends_at)} />
+            </div>
+          )}
+
+          {/* Host Profile Trust Card */}
+          {campaign.host && (
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 mb-4 border border-white/10 text-left shadow-lg">
+              <div className="flex items-center gap-4">
+                {campaign.host.avatar_url ? (
+                  <img 
+                    src={campaign.host.avatar_url} 
+                    alt={campaign.host.full_name} 
+                    className="w-12 h-12 rounded-xl object-cover border border-white/20 bg-white"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center border border-white/15">
+                    <span className="text-white font-black text-base">
+                      {campaign.host.full_name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'H'}
+                    </span>
+                  </div>
+                )}
+                <div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="font-extrabold text-sm text-white">{campaign.host.full_name}</p>
+                    {campaign.host.is_verified && (
+                      <span className="inline-flex items-center gap-0.5 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                        <CheckCircle className="w-2.5 h-2.5" /> Verified
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-white/80 text-[11px] font-medium leading-tight mt-0.5">
+                    {campaign.host.title || 'Faculty Member'} • {campaign.host.department || 'University Host'}
+                  </p>
+                  <p className="text-[10px] text-white/50 leading-tight mt-1">
+                    Payments land directly in the host&apos;s verified institution ledger.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
