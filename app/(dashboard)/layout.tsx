@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import { useState } from 'react'
-import { SupabaseHealthMonitor } from '@/components/SupabaseHealthMonitor'
+import { SystemStatus } from '@/components/SystemStatus'
 
 const navLinks = [
   { href: '/campaigns', label: 'Campaigns', icon: FolderOpen },
@@ -78,7 +78,7 @@ export default function DashboardLayout({
 
         {/* Health Monitor */}
         <div className="px-3 pb-2 hidden lg:block">
-          <SupabaseHealthMonitor />
+          <SystemStatus />
         </div>
 
         {/* Logout */}
