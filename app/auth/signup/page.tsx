@@ -31,6 +31,8 @@ type FormValues = z.infer<typeof schema>
 export default function SignupPage() {
   const router = useRouter()
   const [serverError, setServerError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient()
 
@@ -55,11 +57,19 @@ export default function SignupPage() {
         options: {
           data: {
             full_name: values.fullName
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       })
 
       if (authError) {
+        // Handle email confirmation case properly
+        if (authError.message.toLowerCase().includes('email not confirmed') || authError.message.toLowerCase().includes('already registered')) {
+          setRegisteredEmail(values.email)
+          setSuccessMessage('✅ Registration successful! Check your email to confirm your account.')
+          return
+        }
+        
         setServerError(authError.message)
         return
       }
@@ -151,13 +161,21 @@ export default function SignupPage() {
       }
 
       // 6. Sign in session on client and route directly into dashboard
-      await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password
       })
 
-      router.push('/campaigns')
-      router.refresh()
+      if (signInError && signInError.message.toLowerCase().includes('email not confirmed')) {
+        setRegisteredEmail(values.email)
+        setSuccessMessage('✅ Check your email for confirmation link. Then log in.')
+        return
+      }
+
+      // Account created and requires confirmation
+      setRegisteredEmail(values.email)
+      setSuccessMessage('✅ Check your email for confirmation link. Then log in.')
+      
     } catch (e: any) {
       setServerError(e?.message || 'Registration failed. Please try again.')
     } finally {
@@ -194,6 +212,54 @@ export default function SignupPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {successMessage ? (
+              <div className="space-y-6 py-4 text-center animate-in fade-in duration-500">
+                <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
+                  <span className="text-2xl">✅</span>
+                </div>
+                <h3 className="text-xl font-bold text-white tracking-wide">ACCOUNT CREATED</h3>
+                <div className="space-y-2 text-slate-300 text-sm">
+                  <p>We've sent a confirmation link to:</p>
+                  <p className="font-bold text-blue-400 text-lg">{registeredEmail}</p>
+                </div>
+                <p className="text-sm text-slate-400 px-4">
+                  Click the link in the email to activate your account. Then you can log in.
+                </p>
+                
+                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5 mt-6">
+                  <p className="text-xs text-slate-400 mb-3">
+                    📧 Didn't receive email? Check spam folder or click here to resend
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    type="button"
+                    className="w-full border-slate-600 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                    onClick={async () => {
+                      if (registeredEmail) {
+                        await supabase.auth.resend({
+                          type: 'signup',
+                          email: registeredEmail,
+                          options: {
+                            emailRedirectTo: `${window.location.origin}/auth/callback`
+                          }
+                        })
+                        alert('Confirmation email resent!')
+                      }
+                    }}
+                  >
+                    Resend Email
+                  </Button>
+                </div>
+                
+                <div className="pt-4">
+                  <Link href="/auth/login">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all shadow-lg shadow-blue-500/20">
+                      Go to Login
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {serverError && (
                 <div className="flex items-start gap-2.5 rounded-lg border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-xs text-rose-300">
@@ -342,6 +408,7 @@ export default function SignupPage() {
                 </Link>
               </div>
             </form>
+            )}
           </CardContent>
         </Card>
       </div>
