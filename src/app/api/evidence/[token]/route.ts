@@ -58,8 +58,11 @@ export async function GET(
       })
 
     const screenshotUrl = session.screenshot_url || ''
-    const urlParts = screenshotUrl.split('/')
-    const screenshotPath = urlParts.slice(urlParts.indexOf('payment-proofs') + 1).join('/')
+    let screenshotPath = screenshotUrl
+    if (screenshotUrl.includes('payment-proofs')) {
+      const urlParts = screenshotUrl.split('/')
+      screenshotPath = urlParts.slice(urlParts.indexOf('payment-proofs') + 1).join('/')
+    }
 
     const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin
       .storage

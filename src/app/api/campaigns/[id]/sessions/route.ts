@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { v4 as uuidv4 } from 'uuid'
 import { z } from 'zod'
 import { extractTextFromImage } from '@/lib/ocr/lightweight'
 import { extractReceiptData } from '@/lib/receipt/parser'
+import { generateEvidenceToken } from '@/lib/qr/generator'
+import { fuzzyMatcher } from '@/lib/matching/fuzzy'
 
 const submitPaymentSchema = z.object({
   student_name: z
@@ -90,7 +93,7 @@ export async function POST(
         return NextResponse.json({ message: validatedResult.error.errors[0].message }, { status: 400 })
       }
 
-      const validated = validatedResult.data
+      const validated = validatedResult.data!
 
       const { data: campaignData, error: campaignError } = await (supabaseAdmin
         .from('campaigns' as any) as any)
@@ -104,6 +107,23 @@ export async function POST(
         return NextResponse.json({ message: 'Campaign could not be found.' }, { status: 400 })
       }
 
+      const normalizedMatric = validated.matric_number.toUpperCase().trim()
+
+      // Check for duplicate matric number (case-insensitive and normalized)
+      const { data: existing } = await supabaseAdmin
+        .from('payment_sessions')
+        .select('id')
+        .eq('campaign_id', campaignId)
+        .eq('matric_number', normalizedMatric)
+        .maybeSingle()
+
+      if (existing) {
+        return NextResponse.json(
+          { message: 'A payment proof has already been submitted for this matric number.' },
+          { status: 409 }
+        )
+      }
+
       const ocrBuffer = Buffer.from(arrayBuffer)
       const extractedText = await extractTextFromImage(ocrBuffer)
       
@@ -112,6 +132,14 @@ export async function POST(
       const expectedAmount = campaign.amount
       const campaignStart = campaign.starts_at ? new Date(campaign.starts_at) : null
       const campaignEnd = campaign.ends_at ? new Date(campaign.ends_at) : null
+      
+      // Expired campaigns are strictly blocked from receiving payments server-side
+      if (campaignEnd && new Date() > campaignEnd) {
+        return NextResponse.json(
+          { message: 'Security Alert: This campaign has expired and is no longer accepting payments.' },
+          { status: 400 }
+        )
+      }
       
       let verificationStatus = 'pending'
       let isDisputed = false
@@ -148,6 +176,20 @@ export async function POST(
         verificationStatus = 'date_unreadable'
       }
       
+      // Perform double-weighted fuzzy matching on OCR extracted sender's name
+      let fuzzyMatchScore: number | null = null
+      if (receipt.sender) {
+        const targetName = validated.payer_name || validated.student_name
+        const matchResult = fuzzyMatcher.match(targetName, receipt.sender)
+        fuzzyMatchScore = matchResult.score
+        
+        if (!matchResult.matched && verificationStatus === 'pending') {
+          isDisputed = true
+          disputeReason = `Sender name mismatch: Form lists "${targetName}", but receipt states "${receipt.sender}" (Fuzzy Match: ${Math.round(matchResult.score)}%)`
+          verificationStatus = 'third_party_payment'
+        }
+      }
+
       if (verificationStatus === 'pending') {
         if (validated.payer_name && validated.payer_name !== validated.student_name) {
           verificationStatus = 'third_party_payment'
@@ -170,13 +212,8 @@ export async function POST(
         throw uploadError
       }
 
-      const { data: { publicUrl } } = supabaseAdmin
-        .storage
-        .from('payment-proofs')
-        .getPublicUrl(screenshotPath)
-
       const sessionToken = uuidv4()
-      const evidenceToken = `evid_${uuidv4()}`
+      const evidenceToken = generateEvidenceToken()
 
       const { data: rawDbResult, error: dbErr } = await (supabaseAdmin as any).rpc(
         'submit_payment_with_verification',
@@ -185,7 +222,7 @@ export async function POST(
           p_campaign_id: campaignId,
           p_school_id: campaign.school_id,
           p_student_name: validated.student_name,
-          p_matric_number: validated.matric_number,
+          p_matric_number: normalizedMatric,
           p_contact_info: validated.contact_info,
           p_payer_name: validated.payer_name,
           p_payment_method: validated.relationship,
@@ -195,7 +232,7 @@ export async function POST(
           p_is_disputed: isDisputed,
           p_dispute_reason: disputeReason,
           p_session_token: sessionToken,
-          p_screenshot_url: publicUrl,
+          p_screenshot_url: screenshotPath,
           p_evidence_token: evidenceToken,
           p_extracted_amount: receipt.amount,
           p_extracted_date: receipt.date ? receipt.date.toISOString() : null
@@ -208,8 +245,15 @@ export async function POST(
 
       const dbResult = rawDbResult as any
 
-      if (!dbResult || !dbResult.success) {
-        return NextResponse.json({ message: dbResult?.message || 'Payment submission validation failed.' }, { status: 403 })
+      if (dbResult && dbResult.success) {
+        // Save OCR sender name and fuzzy match score in database
+        await (supabaseAdmin
+          .from('payment_sessions' as any) as any)
+          .update({
+            ocr_sender_name: receipt.sender || null,
+            fuzzy_match_score: fuzzyMatchScore
+          })
+          .eq('id', dbResult.session_id)
       }
 
       await (supabaseAdmin
@@ -218,7 +262,7 @@ export async function POST(
           payment_session_id: dbResult.session_id,
           event_type: isDisputed ? 'disputed' : verificationStatus,
           event_data: { 
-            screenshot_url: publicUrl,
+            screenshot_url: screenshotPath,
             dispute_reason: disputeReason,
             payer_name: validated.payer_name,
             payment_method: validated.relationship
@@ -288,16 +332,11 @@ export async function POST(
         throw uploadError;
       }
 
-      const { data: { publicUrl: disputeUrl } } = supabaseAdmin
-        .storage
-        .from('payment-proofs')
-        .getPublicUrl(screenshotPath);
-
       await (supabaseAdmin
         .from('payment_sessions' as any) as any)
         .update({
           is_disputed: true,
-          dispute_screenshot_url: disputeUrl,
+          dispute_screenshot_url: screenshotPath,
           disputed_at: new Date().toISOString()
         })
         .eq('id', sessionId);
@@ -307,7 +346,7 @@ export async function POST(
         .insert({
           payment_session_id: sessionId,
           event_type: 'disputed',
-          event_data: { dispute_screenshot_url: disputeUrl },
+          event_data: { dispute_screenshot_url: screenshotPath },
           actor: 'student'
         });
 
@@ -332,6 +371,58 @@ export async function PATCH(req: NextRequest) {
 
     if (!sessionId || !status) {
       return NextResponse.json({ message: 'Missing required parameters.' }, { status: 400 })
+    }
+
+    // 1. Authenticate the user calling PATCH Route Handler
+    const supabase = createClient()
+    const { data: { user }, error: authErr } = await supabase.auth.getUser()
+
+    if (authErr || !user) {
+      return NextResponse.json({ message: 'Unauthorized access.' }, { status: 401 })
+    }
+
+    // 2. Fetch target payment session details
+    const { data: sessionData, error: sessionErr } = await supabaseAdmin
+      .from('payment_sessions')
+      .select('campaign_id, school_id')
+      .eq('id', sessionId)
+      .maybeSingle()
+
+    const session = sessionData as any
+    if (sessionErr || !session) {
+      return NextResponse.json({ message: 'Session not found.' }, { status: 404 })
+    }
+
+    // 3. Fetch linked campaign host details
+    const { data: campaignData, error: campaignErr } = await supabaseAdmin
+      .from('campaigns')
+      .select('host_id, school_id')
+      .eq('id', session.campaign_id)
+      .maybeSingle()
+
+    const campaign = campaignData as any
+    if (campaignErr || !campaign) {
+      return NextResponse.json({ message: 'Campaign not found.' }, { status: 404 })
+    }
+
+    // 4. Retrieve user's role profile
+    const { data: profileData } = await supabaseAdmin
+      .from('user_profiles')
+      .select('role, school_id')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const profile = profileData as any
+    if (!profile) {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
+    }
+
+    // 5. Gatekeeper RBAC: designated host or school/super admin
+    const isHost = campaign.host_id === user.id
+    const isAdmin = profile.role === 'super_admin' || (profile.role === 'school_admin' && campaign.school_id === profile.school_id)
+
+    if (!isHost && !isAdmin) {
+      return NextResponse.json({ message: 'Forbidden: You do not have permissions to modify this session.' }, { status: 403 })
     }
 
     const { error: sessionUpdateErr } = await (supabaseAdmin

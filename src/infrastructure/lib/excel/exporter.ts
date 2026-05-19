@@ -57,15 +57,7 @@ export async function generateCampaignExcel(options: ExportOptions) {
   worksheet.addRow([])
   
   const sortedSessions = [...sessions].sort((a, b) => {
-    const statusA = statusMap.get(a.id)?.status || 'pending'
-    const statusB = statusMap.get(b.id)?.status || 'pending'
-    const isDispA = a.is_disputed || statusA === 'disputed' ? 1 : 0
-    const isDispB = b.is_disputed || statusB === 'disputed' ? 1 : 0
-    
-    if (isDispB !== isDispA) {
-      return isDispB - isDispA
-    }
-    return a.student_name.localeCompare(b.student_name)
+    return (a.student_name || '').localeCompare(b.student_name || '')
   })
 
   const headers = [

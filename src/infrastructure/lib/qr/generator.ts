@@ -1,4 +1,5 @@
 import QRCode from 'qrcode'
+import crypto from 'crypto'
 
 export async function generateEvidenceQR(evidenceUrl: string): Promise<Buffer> {
   return QRCode.toBuffer(evidenceUrl, {
@@ -13,5 +14,5 @@ export async function generateEvidenceQR(evidenceUrl: string): Promise<Buffer> {
 }
 
 export function generateEvidenceToken(): string {
-  return `evid_${Math.random().toString(36).substring(2, 15)}_${Date.now()}`
+  return `evid_${crypto.randomBytes(16).toString('hex')}`
 }

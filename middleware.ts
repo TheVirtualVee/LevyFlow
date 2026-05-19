@@ -2,53 +2,10 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-// In-Memory sliding-window rate limit registry for DDoS defense
-const rateLimitCache = new Map<string, { count: number; resetTime: number }>()
-
-function isRateLimited(ip: string, limit: number, windowMs: number): boolean {
-  const now = Date.now()
-  const record = rateLimitCache.get(ip)
-
-  if (!record) {
-    rateLimitCache.set(ip, { count: 1, resetTime: now + windowMs })
-    return false
-  }
-
-  if (now > record.resetTime) {
-    rateLimitCache.set(ip, { count: 1, resetTime: now + windowMs })
-    return false
-  }
-
-  record.count++
-  if (record.count > limit) {
-    return true
-  }
-
-  return false
-}
-
 export async function middleware(req: NextRequest) {
   let res = NextResponse.next({
     request: { headers: req.headers },
   })
-
-  // Rate Limiter logic for critical student API endpoints
-  const pathname = req.nextUrl.pathname
-  const isCriticalApi = 
-    pathname.includes('/register') || 
-    pathname.includes('/validate-token') || 
-    (pathname.includes('/sessions') && req.method === 'POST')
-
-  if (isCriticalApi) {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || req.ip || '127.0.0.1'
-    // Rate limit rule: Maximum of 10 hits per 1-minute window
-    if (isRateLimited(ip, 10, 60 * 1000)) {
-      return new NextResponse('Too Many Requests. Please slow down and try again later.', { 
-        status: 429,
-        headers: { 'Content-Type': 'text/plain' }
-      })
-    }
-  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -68,6 +25,31 @@ export async function middleware(req: NextRequest) {
       },
     }
   )
+
+  // Rate Limiter logic for critical student API endpoints
+  const pathname = req.nextUrl.pathname
+  const isCriticalApi = 
+    pathname.includes('/register') || 
+    pathname.includes('/validate-token') || 
+    (pathname.includes('/sessions') && req.method === 'POST')
+
+  if (isCriticalApi) {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || req.ip || '127.0.0.1'
+    
+    // Call Postgres atomic rate-limiting function
+    const { data: isLimited } = await supabase.rpc('check_rate_limit', {
+      p_ip: ip,
+      p_limit: 10,
+      p_window_seconds: 60
+    })
+
+    if (isLimited) {
+      return new NextResponse('Too Many Requests. Please slow down and try again later.', { 
+        status: 429,
+        headers: { 'Content-Type': 'text/plain' }
+      })
+    }
+  }
 
   // Refresh session to keep tokens alive
   const { data: { session } } = await supabase.auth.getSession()

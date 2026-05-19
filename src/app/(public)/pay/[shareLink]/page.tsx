@@ -251,10 +251,45 @@ export default function PaymentPage({ params }: { params: { shareLink: string } 
 
   if (!campaign) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-slate-400 font-medium">Resolving whitelabel security parameters...</p>
+      <div className="min-h-screen bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full bg-slate-900/60 backdrop-blur-[2px] -z-10" />
+        <div className="absolute w-[600px] h-[600px] bg-white/5 rounded-full blur-[150px] -top-48 -left-48 -z-10 animate-pulse" />
+        
+        <div className="max-w-md mx-auto relative pt-10">
+          <div className="text-center mb-8 flex flex-col items-center">
+            <div className="w-16 h-16 rounded-full bg-slate-800/80 animate-pulse mb-4 border border-slate-700 shadow-md"></div>
+            <div className="h-6 w-3/4 bg-slate-800/80 animate-pulse rounded-md mb-2"></div>
+            <div className="h-4 w-1/2 bg-slate-800/80 animate-pulse rounded-md mt-1"></div>
+            <div className="h-3 w-1/3 bg-slate-800/80 animate-pulse rounded-md mt-2"></div>
+          </div>
+
+          <div className="bg-white/5 border border-slate-800 rounded-2xl shadow-xl p-6 backdrop-blur-sm space-y-6">
+            <div className="h-20 w-full bg-slate-800/50 animate-pulse rounded-xl mb-6"></div>
+            
+            <div className="space-y-4 pt-4 border-t border-slate-800/50">
+              <div className="h-4 w-1/3 bg-slate-800/50 animate-pulse rounded"></div>
+              
+              <div className="h-10 w-full bg-slate-800/40 animate-pulse rounded-lg mt-2"></div>
+              
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <div>
+                  <div className="h-4 w-1/2 bg-slate-800/50 animate-pulse rounded mb-2"></div>
+                  <div className="h-10 w-full bg-slate-800/40 animate-pulse rounded-lg"></div>
+                </div>
+                <div>
+                  <div className="h-4 w-1/2 bg-slate-800/50 animate-pulse rounded mb-2"></div>
+                  <div className="h-10 w-full bg-slate-800/40 animate-pulse rounded-lg"></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-800/50 space-y-2 mt-4">
+              <div className="h-4 w-2/3 bg-slate-800/50 animate-pulse rounded"></div>
+              <div className="h-10 w-full bg-slate-800/40 animate-pulse rounded-lg border border-dashed border-slate-700"></div>
+            </div>
+            
+            <div className="h-12 w-full bg-blue-900/30 animate-pulse rounded-xl mt-6"></div>
+          </div>
         </div>
       </div>
     )

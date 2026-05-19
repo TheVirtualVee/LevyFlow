@@ -22,6 +22,11 @@ export function extractReceiptData(text: string): ReceiptData {
     /(\d{1,2})-(\d{1,2})-(\d{2,4})/,
     /(\d{4})-(\d{2})-(\d{2})/
   ]
+
+  const senderPatterns = [
+    /(?:sender name|sender|paid by|transfer from|from|account name|payer):\s*([a-zA-Z\s]{3,40})/i,
+    /([a-zA-Z\s]{3,30})\s*(?:has sent you|transferred|sent)/i
+  ]
   
   let amount: number | null = null
   for (const pattern of amountPatterns) {
@@ -47,6 +52,19 @@ export function extractReceiptData(text: string): ReceiptData {
       }
     }
   }
+
+  let sender: string | null = null
+  for (const pattern of senderPatterns) {
+    const match = text.match(pattern)
+    if (match) {
+      const parsedSender = match[1].trim()
+      // Exclude generic platform words
+      if (parsedSender && !/transaction|transfer|receipt|payment|bank|success/i.test(parsedSender)) {
+        sender = parsedSender
+        break
+      }
+    }
+  }
   
-  return { amount, date, sender: null }
+  return { amount, date, sender }
 }
