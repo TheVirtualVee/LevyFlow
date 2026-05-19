@@ -293,11 +293,11 @@ export function ProfileSetupWizard({ userId, email, onComplete }: ProfileSetupWi
                   id="role"
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-850 text-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-800 text-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
-                  <option value="lecturer">Individual Lecturer / Coordinator</option>
-                  <option value="course_rep">Course Representative (ECO 301, etc.)</option>
-                  <option value="school_admin">Department / Faculty Admin</option>
+                  <option value="lecturer" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Individual Lecturer / Coordinator</option>
+                  <option value="course_rep" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Course Representative (ECO 301, etc.)</option>
+                  <option value="school_admin" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Department / Faculty Admin</option>
                 </select>
               </div>
 
@@ -433,11 +433,11 @@ export function ProfileSetupWizard({ userId, email, onComplete }: ProfileSetupWi
                   id="bank_name"
                   value={formData.bank_name}
                   onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
-                  className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-850 text-white px-3 py-1 text-sm shadow-sm focus:outline-none"
+                  className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-800 text-white px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
-                  <option value="">Select bank</option>
+                  <option value="" style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>Select bank</option>
                   {NIGERIAN_BANKS.map((b) => (
-                    <option key={b} value={b}>{b}</option>
+                    <option key={b} value={b} style={{ backgroundColor: '#1e293b', color: '#ffffff' }}>{b}</option>
                   ))}
                 </select>
               </div>
