@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -26,10 +27,40 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export default function SchoolOnboardPage() {
+  const router = useRouter()
+  const [authorized, setAuthorized] = useState<boolean | null>(null)
   const [success, setSuccess] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          router.replace('/auth/login')
+          return
+        }
+
+        const { data: profile } = await (supabase
+          .from('user_profiles') as any)
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        if (profile?.role === 'super_admin') {
+          setAuthorized(true)
+        } else {
+          router.replace('/campaigns')
+        }
+      } catch (err) {
+        console.error(err)
+        router.replace('/campaigns')
+      }
+    }
+    checkAuth()
+  }, [supabase, router])
 
   const {
     register,
@@ -126,6 +157,21 @@ export default function SchoolOnboardPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (authorized === null) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-3"></div>
+          <p className="text-slate-500 font-medium">Verifying Credentials...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!authorized) {
+    return null
   }
 
   return (

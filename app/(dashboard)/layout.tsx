@@ -12,12 +12,12 @@ import {
   Menu,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SystemStatus } from '@/components/SystemStatus'
 
 const navLinks = [
   { href: '/campaigns', label: 'Campaigns', icon: FolderOpen },
-  { href: '/admin/schools/onboard', label: 'School Onboarding', icon: ShieldCheck },
+  { href: '/admin/schools/onboard', label: 'School Onboarding', icon: ShieldCheck, adminOnly: true },
 ]
 
 export default function DashboardLayout({
@@ -29,11 +29,35 @@ export default function DashboardLayout({
   const router = useRouter()
   const supabase = createClient()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [role, setRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function loadRole() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: profile } = await (supabase
+            .from('user_profiles') as any)
+            .select('role')
+            .eq('id', user.id)
+            .single()
+          if (profile?.role) {
+            setRole(profile.role)
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching role:', e)
+      }
+    }
+    loadRole()
+  }, [supabase])
 
   async function handleLogout() {
     await supabase.auth.signOut()
     router.push('/auth/login')
   }
+
+  const visibleLinks = navLinks.filter(link => !link.adminOnly || role === 'super_admin')
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -59,7 +83,7 @@ export default function DashboardLayout({
 
         {/* Nav */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          {navLinks.map(({ href, label, icon: Icon }) => (
+          {visibleLinks.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}
