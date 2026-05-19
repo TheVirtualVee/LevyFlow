@@ -13,6 +13,7 @@ import {
   Inbox
 } from 'lucide-react'
 import Link from 'next/link'
+import { BroadcastManager } from '@/components/BroadcastManager'
 
 export default function CampaignsListPage() {
   const [campaigns, setCampaigns] = useState<any[]>([])
@@ -20,6 +21,7 @@ export default function CampaignsListPage() {
   const [userProfile, setUserProfile] = useState<any>(null)
   const [parentLecturer, setParentLecturer] = useState<any>(null)
   const [stats, setStats] = useState({ expected: 0, collected: 0, paidCount: 0, pendingCount: 0 })
+  const [activeBroadcastId, setActiveBroadcastId] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -181,6 +183,11 @@ export default function CampaignsListPage() {
         </div>
       </div>
 
+      {/* Global Broadcast Section */}
+      <div className="no-print">
+        <BroadcastManager />
+      </div>
+
       {/* Title & Creation Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="text-left">
@@ -251,11 +258,31 @@ export default function CampaignsListPage() {
                       <span className="truncate">{new Date(c.ends_at).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <Link href={`/campaigns/${c.id}`} className="block mt-4">
-                    <Button className="w-full bg-slate-50 group-hover:bg-blue-600 text-slate-700 group-hover:text-white border border-slate-200 group-hover:border-blue-600 transition-all font-bold py-2 rounded text-[11px] flex items-center justify-center gap-1.5">
-                      Open Control Panel <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-                    </Button>
-                  </Link>
+                  <div className="flex gap-2 mt-4">
+                    <Link href={`/campaigns/${c.id}`} className="flex-1">
+                      <Button className="w-full bg-slate-50 group-hover:bg-blue-600 text-slate-700 group-hover:text-white border border-slate-200 group-hover:border-blue-600 transition-all font-bold py-2 rounded text-[11px] flex items-center justify-center gap-1.5">
+                        Control Panel <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                      </Button>
+                    </Link>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setActiveBroadcastId(activeBroadcastId === c.id ? null : c.id)
+                      }}
+                      className={`px-3 border text-[11px] font-bold rounded flex items-center justify-center gap-1.5 transition-all ${
+                        activeBroadcastId === c.id
+                          ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      📢 Broadcast
+                    </button>
+                  </div>
+                  {activeBroadcastId === c.id && (
+                    <div className="border-t border-slate-100 pt-4 mt-4 no-print w-full">
+                      <BroadcastManager campaignId={c.id} />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )
